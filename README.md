@@ -207,7 +207,7 @@ curl http://127.0.0.1:3456/health
 For automated installation, use our script:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/MBimrose/claude-code-local-installer/main/install-claude-code-local.sh | bash
+curl -sL https://raw.githubusercontent.com/wpklab/claude-code-local-installer/main/install-claude-code-local.sh | bash
 ```
 
 ---
