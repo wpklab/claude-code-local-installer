@@ -109,6 +109,24 @@ cat > ~/.claude-code-router/config.json << EOF
         "strip_tool_choice": true,
         "strip_reasoning_from_request": true
       }
+    },
+    {
+      "name": "king_local_vlm",
+      "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
+      "api_key": "not-needed",
+      "models": ["king_local_vlm"],
+      "max_context_tokens": 140000,
+      "max_output_tokens": 40000,
+      "transformer": {
+        "use": [
+          "OpenAI",
+          "auto-compact",
+          "streamoptions"
+        ],
+        "tool_format": "none",
+        "strip_tool_choice": true,
+        "strip_reasoning_from_request": true
+      }
     }
   ],
   "Router": {
