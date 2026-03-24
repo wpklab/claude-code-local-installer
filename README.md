@@ -10,7 +10,29 @@
 
 ---
 
-## Installation Steps
+## Quick Install (One-Line Installer)
+
+```bash
+curl -sL https://raw.githubusercontent.com/wpklab/claude-code-local-installer/main/install-claude-code-local.sh | bash
+```
+
+This automated script will:
+- Install Node.js via NVM
+- Install Claude Code and Router
+- Configure both `king_local` and `king_local_vlm` providers
+- Set up the auto-compact plugin for 200K context management
+- Start the router automatically
+
+After installation, you can use:
+```bash
+ccr code                                    # Default (king_local)
+ccr code --model king_local_vlm             # Use VLM model
+ccr code --dangerously-skip-permissions     # Skip permission prompts
+```
+
+---
+
+## Manual Installation Steps
 
 ### Step 1: Install Node.js via NVM
 
@@ -249,16 +271,6 @@ Your router may not be running. Verify:
 ```bash
 ccr status
 curl http://127.0.0.1:3456/health
-```
-
----
-
-## One-Line Install Script
-
-For automated installation using the VLM model (king_local_vlm), use our script:
-
-```bash
-curl -sL https://raw.githubusercontent.com/wpklab/claude-code-local-installer/main/install-claude-code-local-installer-fixed.sh | bash
 ```
 
 ---
