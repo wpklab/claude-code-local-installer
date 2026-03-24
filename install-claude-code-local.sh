@@ -94,7 +94,7 @@ cat > ~/.claude-code-router/config.json << EOF
   "Providers": [
     {
       "name": "king_local",
-      "api_base_url": "172.22.203.134:8000/v1/chat/completions",
+      "api_base_url": "http://172.22.203.134:8000/v1/chat/completions",
       "api_key": "not-needed",
       "models": ["king_local"],
       "transformer": {
@@ -112,7 +112,7 @@ cat > ~/.claude-code-router/config.json << EOF
     },
     {
       "name": "king_local_vlm",
-      "api_base_url": "172.22.203.134:8001/v1/chat/completions",
+      "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
       "api_key": "not-needed",
       "models": ["king_local_vlm"],
       "transformer": {
@@ -132,7 +132,7 @@ cat > ~/.claude-code-router/config.json << EOF
   "Router": {
     "default": "king_local",
     "strip_beta_headers": true,
-    "mock_token_counting": true
+    "mock_token_counting": false
   }
 }
 EOF
