@@ -91,10 +91,28 @@ nano ~/.claude-code-router/config.json
         "strip_tool_choice": true,
         "strip_reasoning_from_request": true
       }
+    },
+    {
+      "name": "king_local_vlm",
+      "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
+      "api_key": "not-needed",
+      "models": ["king_local_vlm"],
+      "max_context_tokens": 256000,
+      "max_output_tokens": 40000,
+      "transformer": {
+        "use": [
+          "OpenAI",
+          "auto-compact",
+          "streamoptions"
+        ],
+        "tool_format": "none",
+        "strip_tool_choice": true,
+        "strip_reasoning_from_request": true
+      }
     }
   ],
   "Router": {
-    "default": "king_local",
+    "default": "king_local_vlm",
     "strip_beta_headers": true,
     "mock_token_counting": false
   }
@@ -155,6 +173,35 @@ ccr code --dangerously-skip-permissions
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 ccr code --dangerously-skip-permissions
 ```
 
+### Switching Between Models
+
+If you have multiple providers configured (e.g., `king_local` and `king_local_vlm`), you can switch between them:
+
+**Using the --model flag:**
+```bash
+ccr code --model king_local
+```
+
+Or:
+```bash
+ccr code --model king_local_vlm
+```
+
+**Change the default model:**
+
+Edit `~/.claude-code-router/config.json` and update the `Router.default` field:
+```json
+"Router": {
+  "default": "king_local_vlm",
+  ...
+}
+```
+
+Then restart the router:
+```bash
+ccr restart
+```
+
 ---
 
 ## Configuration Files
@@ -208,10 +255,10 @@ curl http://127.0.0.1:3456/health
 
 ## One-Line Install Script
 
-For automated installation, use our script:
+For automated installation using the VLM model (king_local_vlm), use our script:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/wpklab/claude-code-local-installer/main/install-claude-code-local.sh | bash
+curl -sL https://raw.githubusercontent.com/wpklab/claude-code-local-installer/main/install-claude-code-local-installer-fixed.sh | bash
 ```
 
 ---
