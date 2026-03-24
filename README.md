@@ -97,7 +97,7 @@ nano ~/.claude-code-router/config.json
       "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
       "api_key": "not-needed",
       "models": ["king_local_vlm"],
-      "max_context_tokens": 256000,
+      "max_context_tokens": 140000,
       "max_output_tokens": 40000,
       "transformer": {
         "use": [
@@ -112,7 +112,7 @@ nano ~/.claude-code-router/config.json
     }
   ],
   "Router": {
-    "default": "king_local_vlm",
+    "default": "king_local",
     "strip_beta_headers": true,
     "mock_token_counting": false
   }
