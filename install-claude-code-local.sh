@@ -94,16 +94,16 @@ cat > ~/.claude-code-router/config.json << EOF
   "Providers": [
     {
       "name": "king_local",
-      "api_base_url": "http://172.22.203.134:8000/v1/chat/completions",
+      "api_base_url": "172.22.203.134:8000/v1/chat/completions",
       "api_key": "not-needed",
-      "models": ["king_local", "claude-sonnet-4-6"],
-      "max_context_tokens": 140000,
-      "max_output_tokens": 40000,
+      "models": ["king_local"],
       "transformer": {
         "use": [
-          "OpenAI",
+          "openai-adapter",
           "auto-compact",
-          "streamoptions"
+          "streamoptions",
+          ["maxtoken", {"max_tokens": 140000}],
+          ["maxcompletiontokens", {"max_completion_tokens": 40000}]
         ],
         "tool_format": "none",
         "strip_tool_choice": true,
@@ -112,16 +112,16 @@ cat > ~/.claude-code-router/config.json << EOF
     },
     {
       "name": "king_local_vlm",
-      "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
+      "api_base_url": "172.22.203.134:8001/v1/chat/completions",
       "api_key": "not-needed",
       "models": ["king_local_vlm"],
-      "max_context_tokens": 140000,
-      "max_output_tokens": 40000,
       "transformer": {
         "use": [
-          "OpenAI",
+          "openai-adapter",
           "auto-compact",
-          "streamoptions"
+          "streamoptions",
+          ["maxtoken", {"max_tokens": 140000}],
+          ["maxcompletiontokens", {"max_completion_tokens": 40000}]
         ],
         "tool_format": "none",
         "strip_tool_choice": true,
@@ -132,7 +132,7 @@ cat > ~/.claude-code-router/config.json << EOF
   "Router": {
     "default": "king_local",
     "strip_beta_headers": true,
-    "mock_token_counting": false
+    "mock_token_counting": true
   }
 }
 EOF
@@ -406,6 +406,10 @@ echo "    ccr code --dangerously-skip-permissions"
 echo ""
 echo "  Agent mode with skip permissions:"
 echo "    CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 ccr code --dangerously-skip-permissions"
+echo ""
+echo "  Switch between providers:"
+echo "    ccr code --model king_local"
+echo "    ccr code --model king_local_vlm"
 echo ""
 echo "Configuration files:"
 echo "  Router config:  ~/.claude-code-router/config.json"
