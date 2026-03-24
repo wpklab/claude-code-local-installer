@@ -72,7 +72,11 @@ print_status "Directories created"
 # Step 5: Create config.json
 echo ""
 echo "Step 5: Creating router configuration..."
-cat > ~/.claude-code-router/config.json << 'EOF'
+
+# Detect the plugin path dynamically
+PLUGIN_PATH="$HOME/.claude-code-router/plugins/auto-compact.js"
+
+cat > ~/.claude-code-router/config.json << EOF
 {
   "LOG": true,
   "LOG_LEVEL": "info",
@@ -80,7 +84,7 @@ cat > ~/.claude-code-router/config.json << 'EOF'
   "PORT": 3456,
   "transformers": [
     {
-      "path": "~/.claude-code-router/plugins/auto-compact.js",
+      "path": "$PLUGIN_PATH",
       "options": {
         "maxInputTokens": 140000,
         "keepRecentMessages": 20
@@ -115,6 +119,7 @@ cat > ~/.claude-code-router/config.json << 'EOF'
 }
 EOF
 print_status "Config created at ~/.claude-code-router/config.json"
+print_status "Plugin path set to: $PLUGIN_PATH"
 
 # Step 6: Create auto-compact plugin
 echo ""
@@ -123,17 +128,25 @@ cat > ~/.claude-code-router/plugins/auto-compact.js << 'EOF'
 /**
  * Auto-Compact Transformer for Claude Code Router
  * Automatically manages context to prevent overflow
+ *
+ * Features:
+ * - Accounts for output tokens when calculating limits
+ * - Iteratively reduces messages until under limit
+ * - Prevents context overflow errors
  */
 
 class AutoCompactTransformer {
   constructor(options = {}) {
     this.name = 'auto-compact';
-    this.endPoint = null; // No endpoint, works on all
+    this.endPoint = null; // Works on all endpoints
     this.enable = options.enable !== false;
 
-    // Configuration
-    this.maxInputTokens = options.maxInputTokens || 90000;
+    // Configuration - defaults for 200K models
+    this.maxInputTokens = options.maxInputTokens || 160000;
     this.keepRecentMessages = options.keepRecentMessages || 20;
+    this.maxContextTokens = options.maxContextTokens || 202752;
+    this.maxOutputTokens = options.maxOutputTokens || 40000;
+    this.safetyBuffer = options.safetyBuffer || 5000;
 
     // Token usage tracking
     this.totalPromptTokens = 0;
@@ -142,14 +155,13 @@ class AutoCompactTransformer {
   }
 
   /**
-   * Estimate tokens using cl100k_base approximation (OpenAI's encoding)
+   * Estimate tokens using cl100k_base approximation
    * More accurate than raw char/4 for typical English text
    */
   estimateTokens(content) {
     if (!content) return 0;
 
     // Use rough estimation: ~3.5 chars per token for cl100k_base
-    // This is more accurate for typical LLM prompts
     if (typeof content === 'string') {
       return Math.ceil(content.length / 3.5);
     }
@@ -158,7 +170,7 @@ class AutoCompactTransformer {
         if (item.type === 'text') {
           return sum + this.estimateTokens(item.text);
         }
-        return sum + 100; // Estimate for non-text
+        return sum + 100; // Estimate for non-text content
       }, 0);
     }
     return 0;
@@ -175,13 +187,12 @@ class AutoCompactTransformer {
   }
 
   /**
-   * Log message using multiple methods for visibility
+   * Log message with timestamp
    */
   log(message, level = 'info') {
     const timestamp = new Date().toISOString();
     const fullMessage = `[auto-compact] ${message}`;
 
-    // Console methods (may or may not be captured by CCR)
     if (level === 'error') {
       console.error(fullMessage);
     } else if (level === 'warn') {
@@ -190,7 +201,7 @@ class AutoCompactTransformer {
       console.log(fullMessage);
     }
 
-    // Direct stderr write (more reliable for logging)
+    // Direct stderr write for reliable logging
     process.stderr.write(`${timestamp} ${level.toUpperCase()} ${fullMessage}\n`);
   }
 
@@ -198,11 +209,13 @@ class AutoCompactTransformer {
    * Transform incoming request - AUTO-COMPACT
    */
   async transformRequestIn(request, provider) {
-    // Write to file to verify transformer is being called
     const fs = require('fs');
     const logFile = '/tmp/auto-compact-debug.log';
     const timestamp = new Date().toISOString();
-    fs.appendFileSync(logFile, `${timestamp} transformRequestIn called, enable=${this.enable}, messages=${request.messages ? request.messages.length : 'none'}\n`);
+
+    fs.appendFileSync(logFile,
+      `${timestamp} transformRequestIn called, enable=${this.enable}, messages=${request.messages ? request.messages.length : 'none'}\n`
+    );
 
     if (!this.enable || !request.messages) {
       return {
@@ -214,33 +227,66 @@ class AutoCompactTransformer {
     const messages = request.messages;
     const totalTokens = this.countTokens(messages);
 
+    // Calculate effective max input tokens based on output tokens and context limit
+    const requestedOutput = request.max_tokens || this.maxOutputTokens;
+    const effectiveMaxInput = Math.min(
+      this.maxInputTokens,
+      this.maxContextTokens - requestedOutput - this.safetyBuffer
+    );
+
     // Check if compaction needed
-    if (totalTokens <= this.maxInputTokens) {
-      this.log(`Context OK: ${totalTokens} tokens (${messages.length} messages)`);
-      fs.appendFileSync(logFile, `${timestamp} Context OK: ${totalTokens} tokens\n`);
+    if (totalTokens <= effectiveMaxInput) {
+      this.log(`Context OK: ${totalTokens} tokens (${messages.length} messages), limit=${effectiveMaxInput}`);
+      fs.appendFileSync(logFile, `${timestamp} Context OK: ${totalTokens} tokens, limit=${effectiveMaxInput}\n`);
       return {
         body: request,
         config: { headers: {} }
       };
     }
 
-    this.log(`Context too large: ${totalTokens} tokens (${messages.length} messages), compacting...`, 'warn');
-    fs.appendFileSync(logFile, `${timestamp} Context TOO LARGE: ${totalTokens} tokens, compacting...\n`);
+    // Context exceeds threshold - compact it
+    this.log(`Context too large: ${totalTokens} tokens (${messages.length} messages), compacting (limit=${effectiveMaxInput})...`, 'warn');
+    fs.appendFileSync(logFile, `${timestamp} Context TOO LARGE: ${totalTokens} tokens, limit=${effectiveMaxInput}, compacting...\n`);
 
-    // Keep system messages + recent messages
+    // Keep system messages
     const systemMessages = messages.filter(m => m.role === 'system');
     const otherMessages = messages.filter(m => m.role !== 'system');
 
-    // Keep last N messages
-    const recentMessages = otherMessages.slice(-this.keepRecentMessages);
+    // Progressively reduce messages until under limit
+    let currentMessages = [...systemMessages, ...otherMessages];
+    let currentTokens = totalTokens;
+    let keepCount = Math.min(otherMessages.length, this.keepRecentMessages);
+    let iterations = 0;
+    const maxIterations = 10;
 
-    // Combine
-    request.messages = [...systemMessages, ...recentMessages];
+    while (currentTokens > effectiveMaxInput && iterations < maxIterations) {
+      iterations++;
 
+      // Keep system + last N non-system messages
+      const recentMessages = otherMessages.slice(-keepCount);
+      currentMessages = [...systemMessages, ...recentMessages];
+      currentTokens = this.countTokens(currentMessages);
+
+      if (currentTokens <= effectiveMaxInput) {
+        break;
+      }
+
+      // Reduce by half each iteration, but keep at least 2 messages
+      keepCount = Math.max(2, Math.floor(keepCount / 2));
+    }
+
+    request.messages = currentMessages;
     const newTokens = this.countTokens(request.messages);
     const reduction = Math.round((1 - newTokens / totalTokens) * 100);
-    this.log(`Compacted: ${totalTokens} → ${newTokens} tokens (${reduction}% reduction, ${messages.length} → ${request.messages.length} messages)`, 'warn');
-    fs.appendFileSync(logFile, `${timestamp} Compacted: ${totalTokens} → ${newTokens} tokens (${reduction}% reduction)\n`);
+
+    this.log(`Compacted: ${totalTokens} → ${newTokens} tokens (${reduction}% reduction, ${messages.length} → ${request.messages.length} messages, ${iterations} iterations)`, 'warn');
+    fs.appendFileSync(logFile, `${timestamp} Compacted: ${totalTokens} → ${newTokens} tokens (${reduction}% reduction, ${iterations} iterations)\n`);
+
+    // If still over limit, log error but proceed
+    if (newTokens > effectiveMaxInput) {
+      this.log(`WARNING: Still ${newTokens} tokens after compaction, may exceed limit`, 'error');
+      fs.appendFileSync(logFile, `${timestamp} WARNING: Still ${newTokens} tokens after compaction\n`);
+    }
 
     return {
       body: request,
@@ -249,32 +295,20 @@ class AutoCompactTransformer {
   }
 
   /**
-   * Extract usage from response (streaming or non-streaming)
+   * Transform outgoing request
    */
-  async extractUsage(response) {
-    try {
-      // For non-streaming responses
-      if (!response.body) return null;
+  async transformRequestOut(request, provider) {
+    return {
+      body: request,
+      config: { headers: {} }
+    };
+  }
 
-      const contentType = response.headers.get('content-type') || '';
-
-      // Non-streaming JSON response
-      if (contentType.includes('application/json')) {
-        const clone = response.clone();
-        const data = await clone.json();
-        return data.usage || null;
-      }
-
-      // Streaming response - need to parse SSE for usage
-      if (contentType.includes('text/event-stream') || contentType.includes('text/stream')) {
-        // For streaming, usage comes at the end in a data: [DONE] or usage event
-        // We'll need to track this differently - log it when we see it
-        return null;
-      }
-    } catch (error) {
-      this.log(`Error extracting usage: ${error.message}`, 'error');
-    }
-    return null;
+  /**
+   * Transform incoming response
+   */
+  async transformResponseIn(response, provider) {
+    return response;
   }
 
   /**
@@ -298,8 +332,33 @@ class AutoCompactTransformer {
 
     return response;
   }
+
+  /**
+   * Extract usage from response
+   */
+  async extractUsage(response) {
+    try {
+      if (!response.body) return null;
+
+      const contentType = response.headers.get('content-type') || '';
+
+      if (contentType.includes('application/json')) {
+        const clone = response.clone();
+        const data = await clone.json();
+        return data.usage || null;
+      }
+
+      if (contentType.includes('text/event-stream') || contentType.includes('text/stream')) {
+        return null;
+      }
+    } catch (error) {
+      this.log(`Error extracting usage: ${error.message}`, 'error');
+    }
+    return null;
+  }
 }
 
+// Export for CCR
 module.exports = AutoCompactTransformer;
 EOF
 print_status "Auto-compact plugin created at ~/.claude-code-router/plugins/auto-compact.js"

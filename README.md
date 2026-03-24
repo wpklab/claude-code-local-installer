@@ -56,7 +56,7 @@ mkdir -p ~/.claude-code-router/plugins ~/.claude
 nano ~/.claude-code-router/config.json
 ```
 
-**3.3** Paste the following configuration:
+**3.3** Paste the following configuration (replace `/home/YOURUSER` with your actual home directory path):
 
 ```json
 {
@@ -66,7 +66,7 @@ nano ~/.claude-code-router/config.json
   "PORT": 3456,
   "transformers": [
     {
-      "path": "~/.claude-code-router/plugins/auto-compact.js",
+      "path": "/home/YOURUSER/.claude-code-router/plugins/auto-compact.js",
       "options": {
         "maxInputTokens": 140000,
         "keepRecentMessages": 20
@@ -100,6 +100,8 @@ nano ~/.claude-code-router/config.json
   }
 }
 ```
+
+**Note:** The `path` in the transformers section should be the absolute path to your home directory. You can use `echo ~` or `echo $HOME` to find your home directory path. The one-line install script handles this automatically.
 
 **Save and exit:** Press `Ctrl+X`, then `Y`, then `Enter`
 
@@ -158,8 +160,10 @@ CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 ccr code --dangerously-skip-permissions
 ## Configuration Files
 
 - **Router config:** `~/.claude-code-router/config.json`
-- **Auto-compact plugin:** `~/.claude-code-router/plugins/auto-compact.js`
+- **Auto-compact plugin:** `~/.claude-code-router/plugins/auto-compact.js` (or `/home/$USER/.claude-code-router/plugins/auto-compact.js`)
 - **Debug logs:** `/tmp/auto-compact-debug.log`
+
+**Note:** The plugin path in config.json must be an absolute path (e.g., `/home/username/.claude-code-router/plugins/auto-compact.js`). The one-line install script automatically detects and uses the correct path.
 
 ---
 
