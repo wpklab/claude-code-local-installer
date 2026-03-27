@@ -90,8 +90,11 @@ nano ~/.claude-code-router/config.json
     {
       "path": "/home/YOURUSER/.claude-code-router/plugins/auto-compact.js",
       "options": {
-        "maxInputTokens": 140000,
-        "keepRecentMessages": 20
+        "maxInputTokens": 120000,
+        "keepRecentMessages": 20,
+        "maxContextTokens": 200000,
+        "maxOutputTokens": 16000,
+        "safetyBuffer": 10000
       }
     }
   ],
@@ -101,8 +104,8 @@ nano ~/.claude-code-router/config.json
       "api_base_url": "http://172.22.203.134:8000/v1/chat/completions",
       "api_key": "not-needed",
       "models": ["king_local", "claude-sonnet-4-6"],
-      "max_context_tokens": 140000,
-      "max_output_tokens": 40000,
+      "max_context_tokens": 200000,
+      "max_output_tokens": 16000,
       "transformer": {
         "use": [
           "OpenAI",
@@ -119,8 +122,8 @@ nano ~/.claude-code-router/config.json
       "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
       "api_key": "not-needed",
       "models": ["king_local_vlm"],
-      "max_context_tokens": 140000,
-      "max_output_tokens": 40000,
+      "max_context_tokens": 200000,
+      "max_output_tokens": 16000,
       "transformer": {
         "use": [
           "OpenAI",
@@ -298,11 +301,11 @@ class AutoCompactTransformer {
     this.enable = options.enable !== false;
 
     // Configuration - defaults for 200K models
-    this.maxInputTokens = options.maxInputTokens || 160000;
+    this.maxInputTokens = options.maxInputTokens || 120000;
     this.keepRecentMessages = options.keepRecentMessages || 20;
-    this.maxContextTokens = options.maxContextTokens || 202752;
-    this.maxOutputTokens = options.maxOutputTokens || 40000;
-    this.safetyBuffer = options.safetyBuffer || 5000;
+    this.maxContextTokens = options.maxContextTokens || 200000;
+    this.maxOutputTokens = options.maxOutputTokens || 16000;
+    this.safetyBuffer = options.safetyBuffer || 10000;
 
     // Token usage tracking
     this.totalPromptTokens = 0;

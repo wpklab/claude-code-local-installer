@@ -86,8 +86,11 @@ cat > ~/.claude-code-router/config.json << EOF
     {
       "path": "$PLUGIN_PATH",
       "options": {
-        "maxInputTokens": 140000,
-        "keepRecentMessages": 20
+        "maxInputTokens": 120000,
+        "keepRecentMessages": 20,
+        "maxContextTokens": 200000,
+        "maxOutputTokens": 16000,
+        "safetyBuffer": 10000
       }
     }
   ],
@@ -102,8 +105,8 @@ cat > ~/.claude-code-router/config.json << EOF
           "openai-adapter",
           "auto-compact",
           "streamoptions",
-          ["maxtoken", {"max_tokens": 140000}],
-          ["maxcompletiontokens", {"max_completion_tokens": 40000}]
+          ["maxtoken", {"max_tokens": 200000}],
+          ["maxcompletiontokens", {"max_completion_tokens": 16000}]
         ],
         "tool_format": "none",
         "strip_tool_choice": true,
@@ -120,8 +123,8 @@ cat > ~/.claude-code-router/config.json << EOF
           "openai-adapter",
           "auto-compact",
           "streamoptions",
-          ["maxtoken", {"max_tokens": 140000}],
-          ["maxcompletiontokens", {"max_completion_tokens": 40000}]
+          ["maxtoken", {"max_tokens": 200000}],
+          ["maxcompletiontokens", {"max_completion_tokens": 16000}]
         ],
         "tool_format": "none",
         "strip_tool_choice": true,
@@ -160,11 +163,11 @@ class AutoCompactTransformer {
     this.enable = options.enable !== false;
 
     // Configuration - defaults for 200K models
-    this.maxInputTokens = options.maxInputTokens || 160000;
+    this.maxInputTokens = options.maxInputTokens || 120000;
     this.keepRecentMessages = options.keepRecentMessages || 20;
-    this.maxContextTokens = options.maxContextTokens || 202752;
-    this.maxOutputTokens = options.maxOutputTokens || 40000;
-    this.safetyBuffer = options.safetyBuffer || 5000;
+    this.maxContextTokens = options.maxContextTokens || 200000;
+    this.maxOutputTokens = options.maxOutputTokens || 16000;
+    this.safetyBuffer = options.safetyBuffer || 10000;
 
     // Token usage tracking
     this.totalPromptTokens = 0;
