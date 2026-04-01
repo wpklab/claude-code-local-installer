@@ -93,8 +93,8 @@ cat > ~/.claude-code-router/config.json << EOF
         "safetyBuffer": 10000
       }
     }
-  ],
-  "Providers": [
+    ],
+    "Providers": [
     {
       "name": "king_local",
       "api_base_url": "http://172.22.203.134:8000/v1/chat/completions",
@@ -130,10 +130,31 @@ cat > ~/.claude-code-router/config.json << EOF
         "strip_tool_choice": true,
         "strip_reasoning_from_request": true
       }
+    },
+    {
+      "name": "king_local-nemotron-3-super",
+      "api_base_url": "http://172.22.203.133:8000/v1/chat/completions",
+      "api_key": "not-needed",
+      "models": ["king_local-nemotron-3-super"],
+      "transformer": {
+        "use": [
+          "openai-adapter",
+          ["auto-compact", {"maxInputTokens": 950000, "keepRecentMessages": 20}],
+          "streamoptions",
+          ["maxtoken", {"max_tokens": 950000}],
+          ["maxcompletiontokens", {"max_completion_tokens": 16000}]
+        ],
+        "tool_format": "none",
+        "strip_tool_choice": true,
+        "strip_reasoning_from_request": false
+      }
     }
   ],
   "Router": {
     "default": "king_local",
+    "think": "king_local",
+    "longContext": "king_local-nemotron-3-super",
+    "background": "king_local-nemotron-3-super",
     "strip_beta_headers": true,
     "mock_token_counting": false
   }
