@@ -108,7 +108,7 @@ cat > ~/.claude-code-router/config.json << EOF
           ["maxtoken", {"max_tokens": 200000}],
           ["maxcompletiontokens", {"max_completion_tokens": 16000}]
         ],
-        "tool_format": "none",
+        "tool_format": "openai",
         "strip_tool_choice": true,
         "strip_reasoning_from_request": true
       }
