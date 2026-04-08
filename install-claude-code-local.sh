@@ -152,9 +152,6 @@ cat > ~/.claude-code-router/config.json << EOF
   ],
   "Router": {
     "default": "king_local",
-    "think": "king_local",
-    "longContext": "king_local-nemotron-3-super",
-    "background": "king_local-nemotron-3-super",
     "strip_beta_headers": true,
     "mock_token_counting": false
   }
