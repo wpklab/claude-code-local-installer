@@ -84,7 +84,7 @@ cat > ~/.claude-code-router/config.json << EOF
   "PORT": 3456,
   "transformers": [
     {
-      "path": "$PLUGIN_PATH",
+      "path": "/home/bimrose2/.claude-code-router/plugins/auto-compact.js",
       "options": {
         "maxInputTokens": 120000,
         "keepRecentMessages": 20,
@@ -111,42 +111,6 @@ cat > ~/.claude-code-router/config.json << EOF
         "tool_format": "openai",
         "strip_tool_choice": true,
         "strip_reasoning_from_request": true
-      }
-    },
-    {
-      "name": "king_local_vlm",
-      "api_base_url": "http://172.22.203.134:8001/v1/chat/completions",
-      "api_key": "not-needed",
-      "models": ["king_local_vlm"],
-      "transformer": {
-        "use": [
-          "openai-adapter",
-          "auto-compact",
-          "streamoptions",
-          ["maxtoken", {"max_tokens": 200000}],
-          ["maxcompletiontokens", {"max_completion_tokens": 16000}]
-        ],
-        "tool_format": "none",
-        "strip_tool_choice": true,
-        "strip_reasoning_from_request": true
-      }
-    },
-    {
-      "name": "king_local-nemotron-3-super",
-      "api_base_url": "http://172.22.203.133:8000/v1/chat/completions",
-      "api_key": "not-needed",
-      "models": ["king_local-nemotron-3-super"],
-      "transformer": {
-        "use": [
-          "openai-adapter",
-          ["auto-compact", {"maxInputTokens": 950000, "keepRecentMessages": 20}],
-          "streamoptions",
-          ["maxtoken", {"max_tokens": 950000}],
-          ["maxcompletiontokens", {"max_completion_tokens": 16000}]
-        ],
-        "tool_format": "none",
-        "strip_tool_choice": true,
-        "strip_reasoning_from_request": false
       }
     }
   ],
