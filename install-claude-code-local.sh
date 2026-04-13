@@ -84,7 +84,7 @@ cat > ~/.claude-code-router/config.json << EOF
   "PORT": 3456,
   "transformers": [
     {
-      "path": "/home/bimrose2/.claude-code-router/plugins/auto-compact.js",
+      "path": "$PLUGIN_PATH",
       "options": {
         "maxInputTokens": 120000,
         "keepRecentMessages": 20,
