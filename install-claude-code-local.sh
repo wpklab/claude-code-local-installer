@@ -82,36 +82,12 @@ cat > ~/.claude-code-router/config.json << EOF
   "LOG_LEVEL": "info",
   "HOST": "127.0.0.1",
   "PORT": 3456,
-  "transformers": [
-    {
-      "path": "$PLUGIN_PATH",
-      "options": {
-        "maxInputTokens": 120000,
-        "keepRecentMessages": 20,
-        "maxContextTokens": 200000,
-        "maxOutputTokens": 16000,
-        "safetyBuffer": 10000
-      }
-    }
-    ],
     "Providers": [
     {
       "name": "king_local",
-      "api_base_url": "http://172.22.203.134:8000/v1/chat/completions",
+      "api_base_url": "http://172.22.203.133:8000/v1/chat/completions",
       "api_key": "not-needed",
-      "models": ["king_local"],
-      "transformer": {
-        "use": [
-          "openai-adapter",
-          "auto-compact",
-          "streamoptions",
-          ["maxtoken", {"max_tokens": 200000}],
-          ["maxcompletiontokens", {"max_completion_tokens": 16000}]
-        ],
-        "tool_format": "openai",
-        "strip_tool_choice": true,
-        "strip_reasoning_from_request": true
-      }
+      "models": ["deepseek-ai/DeepSeek-V4-Pro"],
     }
   ],
   "Router": {
